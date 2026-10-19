@@ -1,0 +1,25 @@
+[project]
+name = "support-ticket-router"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Suganthi Tamilarasu", email = "tamilarasu.suganthi+orbc@orbcomm.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "anthropic>=1.14.0",
+    "httpx>=0.28.1",
+    "instructor>=1.17.0",
+    "ipykernel>=7.4.0",
+    "pandas>=3.0.6",
+    "pydantic-settings>=2.16.0",
+    "requests>=2.34.2",
+]
+
+[project.scripts]
+support-ticket-router = "support_ticket_router:main"
+
+[build-system]
+requires = ["uv_build>=0.13.1,<0.14.0"]
+build-backend = "uv_build"

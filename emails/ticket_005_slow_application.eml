@@ -1,0 +1,16 @@
+From: Morgan Patel <morgan.patel@example.com>
+To: support@example.com
+Date: Mon, 12 Oct 2026 13:05:00 +0530
+Subject: Application is very slow after the update
+Message-ID: <ticket-005@example.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+
+Hi Support,
+
+Since the latest update, loading the customer list takes around 40 seconds. Before the update it usually took less than five seconds. Other pages seem normal.
+
+Could you check whether this is a known issue? It is slowing down our team's daily work, although we can still use the application.
+
+Thanks,
+Morgan

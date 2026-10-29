@@ -1,0 +1,134 @@
+{
+  "label": "after-stability",
+  "date": "2026-10-29T17:05:09",
+  "accuracy": {
+    "category": {
+      "right": 10,
+      "total": 10,
+      "tune_right": 10,
+      "tune_total": 10
+    },
+    "urgency": {
+      "right": 10,
+      "total": 10,
+      "tune_right": 10,
+      "tune_total": 10
+    },
+    "route_to": {
+      "right": 10,
+      "total": 10,
+      "tune_right": 10,
+      "tune_total": 10
+    },
+    "needs_human": {
+      "right": 10,
+      "total": 10,
+      "tune_right": 10,
+      "tune_total": 10
+    }
+  },
+  "misses": [],
+  "injection_check": [],
+  "results": [
+    {
+      "file": "emails/ticket_001_password_reset.eml",
+      "category": "account_access",
+      "urgency": "high",
+      "summary": "Customer is locked out of their account because the password reset email is not being received after three attempts, and they need access to complete work due today.",
+      "route_to": "support",
+      "confidence": "high",
+      "needs_human": false,
+      "reasons": []
+    },
+    {
+      "file": "emails/ticket_002_service_outage.eml",
+      "category": "incident",
+      "urgency": "critical",
+      "summary": "Production dashboard has been returning 503 errors for several users since 9:05 AM, preventing the operations team from monitoring today's jobs.",
+      "route_to": "engineering",
+      "confidence": "high",
+      "needs_human": false,
+      "reasons": []
+    },
+    {
+      "file": "emails/ticket_003_billing_dispute.eml",
+      "category": "billing",
+      "urgency": "medium",
+      "summary": "Customer was charged twice for the same monthly subscription and is requesting a review and refund of the duplicate charge.",
+      "route_to": "billing",
+      "confidence": "high",
+      "needs_human": false,
+      "reasons": []
+    },
+    {
+      "file": "emails/ticket_004_feature_request.eml",
+      "category": "feature_request",
+      "urgency": "low",
+      "summary": "Customer requests a CSV export option for filtered results on the reports page, as their team currently copies data manually into a spreadsheet.",
+      "route_to": "product",
+      "confidence": "high",
+      "needs_human": false,
+      "reasons": []
+    },
+    {
+      "file": "emails/ticket_005_slow_application.eml",
+      "category": "performance",
+      "urgency": "medium",
+      "summary": "Since the latest update, the customer list page takes ~40 seconds to load (up from ~5 seconds), slowing down the team's daily work, though the application is still usable.",
+      "route_to": "engineering",
+      "confidence": "high",
+      "needs_human": false,
+      "reasons": []
+    },
+    {
+      "file": "emails/ticket_006_account_access.eml",
+      "category": "account_access",
+      "urgency": "high",
+      "summary": "A new employee is unable to access the team workspace, receiving an \"Access denied\" error despite the invitation being sent to the correct email address.",
+      "route_to": "support",
+      "confidence": "high",
+      "needs_human": false,
+      "reasons": []
+    },
+    {
+      "file": "eval/emails/ticket_013_suspicious_login.eml",
+      "category": "account_access",
+      "urgency": "high",
+      "summary": "Customer received a login alert from an unfamiliar country and wants support to check if any data was accessed or changed in their account.",
+      "route_to": "support",
+      "confidence": "high",
+      "needs_human": false,
+      "reasons": []
+    },
+    {
+      "file": "eval/emails/ticket_014_checkout_down.eml",
+      "category": "incident",
+      "urgency": "critical",
+      "summary": "Checkout is completely broken for all customers since 10:40 \u2014 the payment API returns HTTP 500 on every request, causing ongoing loss of sales.",
+      "route_to": "engineering",
+      "confidence": "high",
+      "needs_human": false,
+      "reasons": []
+    },
+    {
+      "file": "eval/emails/ticket_015_refund_request.eml",
+      "category": "billing",
+      "urgency": "low",
+      "summary": "Customer cancelled their subscription last week and is requesting a prorated refund for the unused days remaining in the current month.",
+      "route_to": "billing",
+      "confidence": "high",
+      "needs_human": false,
+      "reasons": []
+    },
+    {
+      "file": "eval/emails/ticket_016_sync_timeouts.eml",
+      "category": "performance",
+      "urgency": "high",
+      "summary": "The /sync API endpoint times out after 60+ seconds, causing nightly imports to fail for two consecutive nights, leaving the team starting each day with stale data and no workaround.",
+      "route_to": "engineering",
+      "confidence": "high",
+      "needs_human": false,
+      "reasons": []
+    }
+  ]
+}

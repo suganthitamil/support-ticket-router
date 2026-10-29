@@ -1,0 +1,131 @@
+{
+  "label": "baseline-stability",
+  "date": "2026-10-29T17:01:35",
+  "accuracy": {
+    "category": {
+      "right": 10,
+      "total": 10,
+      "tune_right": 10,
+      "tune_total": 10
+    },
+    "urgency": {
+      "right": 9,
+      "total": 10,
+      "tune_right": 9,
+      "tune_total": 10
+    },
+    "route_to": {
+      "right": 10,
+      "total": 10,
+      "tune_right": 10,
+      "tune_total": 10
+    },
+    "needs_human": {
+      "right": 10,
+      "total": 10,
+      "tune_right": 10,
+      "tune_total": 10
+    }
+  },
+  "misses": [
+    [
+      "emails/ticket_006_account_access.eml",
+      "urgency",
+      "high",
+      "medium"
+    ]
+  ],
+  "injection_check": [],
+  "results": [
+    {
+      "file": "emails/ticket_001_password_reset.eml",
+      "category": "account_access",
+      "urgency": "high",
+      "summary": "Customer is locked out of their account after three failed password reset attempts, as the reset email is never received, and needs access to complete time-sensitive work today.",
+      "route_to": "support",
+      "needs_human": false,
+      "reasons": []
+    },
+    {
+      "file": "emails/ticket_002_service_outage.eml",
+      "category": "incident",
+      "urgency": "critical",
+      "summary": "Customer reports production dashboard has been unavailable since 9:05 AM, with multiple users receiving 503 errors and operations team unable to monitor jobs.",
+      "route_to": "engineering",
+      "needs_human": false,
+      "reasons": []
+    },
+    {
+      "file": "emails/ticket_003_billing_dispute.eml",
+      "category": "billing",
+      "urgency": "medium",
+      "summary": "Customer was charged twice for the same monthly subscription and is requesting a review and refund of the duplicate charge.",
+      "route_to": "billing",
+      "needs_human": false,
+      "reasons": []
+    },
+    {
+      "file": "emails/ticket_004_feature_request.eml",
+      "category": "feature_request",
+      "urgency": "low",
+      "summary": "Customer requests a CSV export option for filtered results on the reports page to avoid manual data copying.",
+      "route_to": "product",
+      "needs_human": false,
+      "reasons": []
+    },
+    {
+      "file": "emails/ticket_005_slow_application.eml",
+      "category": "performance",
+      "urgency": "medium",
+      "summary": "Customer reports that loading the customer list takes ~40 seconds since the latest update, up from under 5 seconds, slowing down their team's daily work.",
+      "route_to": "engineering",
+      "needs_human": false,
+      "reasons": []
+    },
+    {
+      "file": "emails/ticket_006_account_access.eml",
+      "category": "account_access",
+      "urgency": "medium",
+      "summary": "A new employee is unable to access the team workspace and receives an \"Access denied\" message despite the sender confirming the invitation email address is correct.",
+      "route_to": "support",
+      "needs_human": false,
+      "reasons": []
+    },
+    {
+      "file": "eval/emails/ticket_013_suspicious_login.eml",
+      "category": "account_access",
+      "urgency": "high",
+      "summary": "Customer received a login alert from an unrecognized country and wants support to check if anything was accessed or changed in their account.",
+      "route_to": "support",
+      "needs_human": false,
+      "reasons": []
+    },
+    {
+      "file": "eval/emails/ticket_014_checkout_down.eml",
+      "category": "incident",
+      "urgency": "critical",
+      "summary": "All customers are unable to complete checkout since 10:40 due to HTTP 500 errors returned by the payment API, causing ongoing loss of sales.",
+      "route_to": "engineering",
+      "needs_human": false,
+      "reasons": []
+    },
+    {
+      "file": "eval/emails/ticket_015_refund_request.eml",
+      "category": "billing",
+      "urgency": "low",
+      "summary": "Customer cancelled their subscription last week and is requesting a refund for the unused days remaining in the current month, with no time pressure indicated.",
+      "route_to": "billing",
+      "needs_human": false,
+      "reasons": []
+    },
+    {
+      "file": "eval/emails/ticket_016_sync_timeouts.eml",
+      "category": "performance",
+      "urgency": "high",
+      "summary": "The /sync API endpoint is timing out after 60+ seconds, causing the customer's nightly import to fail for two consecutive nights with no workaround, leaving their team with stale data each day.",
+      "route_to": "engineering",
+      "needs_human": false,
+      "reasons": []
+    }
+  ]
+}

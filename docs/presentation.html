@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Support Ticket Router</title>
+<style>
+  :root {
+    --bg: #eef0f4; --surface: #ffffff; --ink: #1b2130; --muted: #5a6375; --line: #d9dee7;
+    --accent: #3457d5; --accent-soft: #e6ebfb; --good: #1d7f48; --good-soft: #e3f4ea;
+    --bad: #b83b28; --bad-soft: #fbe9e5; --warn: #9a6a12; --warn-soft: #fbf1dc;
+    --code-bg: #f3f5f9; --shadow: 0 10px 40px rgba(20, 30, 60, .12);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0c0f14; --surface: #161a22; --ink: #e5e8ee; --muted: #98a1b3; --line: #2a303c;
+      --accent: #7f99ff; --accent-soft: #1e2645; --good: #52c48b; --good-soft: #15291f;
+      --bad: #ff7d68; --bad-soft: #321a16; --warn: #e2b24f; --warn-soft: #2d2412;
+      --code-bg: #10141b; --shadow: 0 10px 40px rgba(0, 0, 0, .5);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0c0f14; --surface: #161a22; --ink: #e5e8ee; --muted: #98a1b3; --line: #2a303c;
+    --accent: #7f99ff; --accent-soft: #1e2645; --good: #52c48b; --good-soft: #15291f;
+    --bad: #ff7d68; --bad-soft: #321a16; --warn: #e2b24f; --warn-soft: #2d2412;
+    --code-bg: #10141b; --shadow: 0 10px 40px rgba(0, 0, 0, .5);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg); color: var(--ink); overflow: hidden;
+    font: 17px/1.5 "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  code, pre, .mono { font-family: "Cascadia Code", Consolas, "SF Mono", Menlo, monospace; }
+
+  /* ---------- stage: a fixed 1280x720 slide, scaled to fit any screen ---------- */
+  #viewport { position: fixed; inset: 0 0 52px 0; display: grid; place-items: center; }
+  #stage { width: 1280px; height: 720px; position: relative; transform-origin: center center; }
+  .slide {
+    position: absolute; inset: 0; padding: 52px 72px 44px; display: none; flex-direction: column;
+    background: var(--surface); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden;
+  }
+  .slide.active { display: flex; animation: enter .25s ease-out; }
+  @keyframes enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .kicker { color: var(--accent); font-weight: 650; letter-spacing: .08em; text-transform: uppercase; font-size: 13px; margin: 0 0 6px; }
+  h1 { font-size: 54px; line-height: 1.08; margin: 0 0 18px; letter-spacing: -.02em; }
+  h2 { font-size: 34px; line-height: 1.15; margin: 0 0 20px; letter-spacing: -.01em; }
+  h3 { font-size: 19px; margin: 0 0 8px; }
+  p { margin: 0 0 12px; }
+  .lead { font-size: 22px; color: var(--muted); max-width: 900px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 14px; }
+  ul.clean { margin: 0; padding-left: 20px; }
+  ul.clean li { margin: 0 0 8px; }
+  .slide-footer { margin-top: auto; display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; padding-top: 10px; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .card { border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; background: var(--surface); }
+  .card.problem { border-left: 5px solid var(--bad); }
+  .card.fix { border-left: 5px solid var(--good); }
+  .card.risk { border-left: 5px solid var(--warn); }
+  .card.info { border-left: 5px solid var(--accent); }
+  .tag { display: inline-block; font-size: 12px; font-weight: 650; padding: 2px 9px; border-radius: 999px; margin-right: 6px; }
+  .tag.bad { background: var(--bad-soft); color: var(--bad); }
+  .tag.good { background: var(--good-soft); color: var(--good); }
+  .tag.warn { background: var(--warn-soft); color: var(--warn); }
+  .tag.info { background: var(--accent-soft); color: var(--accent); }
+
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; margin: 0; font-size: 13.5px; line-height: 1.45; overflow: hidden; white-space: pre;
+  }
+  pre .c { color: var(--muted); font-style: italic; }
+  pre .k { color: var(--accent); font-weight: 600; }
+  pre .s { color: var(--good); }
+  pre .r { color: var(--bad); }
+  pre .w { color: var(--warn); }
+  :not(pre) > code { background: var(--code-bg); border: 1px solid var(--line); padding: 0 5px; border-radius: 5px; font-size: .9em; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 16px; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .up { color: var(--good); font-weight: 700; }
+
+  /* issue → fix → result tables */
+  table.issues { font-size: 14.5px; }
+  table.issues td { padding: 12px 12px; line-height: 1.42; }
+  table.issues td:first-child { width: 230px; }
+  table.issues td:first-child b { display: block; font-size: 16px; margin-bottom: 2px; }
+  table.issues .n { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 700; margin-right: 6px; }
+  table.issues td.found { color: var(--muted); width: 290px; }
+  table.issues td.result { width: 230px; }
+
+  .stat { display: flex; flex-direction: column; gap: 2px; }
+  .stat b { font-size: 44px; line-height: 1; letter-spacing: -.02em; }
+  .stat span { color: var(--muted); font-size: 14px; }
+
+  /* title slide */
+  .title-slide { justify-content: center; background:
+      radial-gradient(1200px 500px at 110% -10%, var(--accent-soft), transparent 60%), var(--surface); }
+  .title-slide h1 { font-size: 72px; }
+  .title-slide > .kicker:first-child { margin-top: auto; }  /* with the footer's auto margin, centres the text */
+
+  /* diagram */
+  svg.flow { width: 100%; height: auto; }
+  svg.flow .box { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  svg.flow .box.ai { fill: var(--accent-soft); stroke: var(--accent); }
+  svg.flow .box.ok { fill: var(--good-soft); stroke: var(--good); }
+  svg.flow .box.hold { fill: var(--warn-soft); stroke: var(--warn); }
+  svg.flow .t { fill: var(--ink); font-size: 16px; font-weight: 650; text-anchor: middle; }
+  svg.flow .st { fill: var(--muted); font-size: 12.5px; text-anchor: middle; font-family: Consolas, monospace; }
+  svg.flow .edge { fill: none; stroke: var(--muted); stroke-width: 1.8; }
+  svg.flow .edge.loop { stroke: var(--accent); stroke-dasharray: 5 4; }
+  svg.flow .edge.holdline { stroke: var(--warn); }
+  svg.flow .lbl { fill: var(--muted); font-size: 13px; }
+  svg.flow .lbl.a { fill: var(--accent); }
+  svg.flow .lbl.w { fill: var(--warn); }
+  svg.flow .head { fill: var(--muted); }
+  svg.flow .head.a { fill: var(--accent); }
+  svg.flow .head.w { fill: var(--warn); }
+
+  /* bottom bar */
+  #bar {
+    position: fixed; left: 0; right: 0; bottom: 0; height: 52px; display: flex; align-items: center; gap: 10px;
+    padding: 0 16px; color: var(--muted); font-size: 14px; background: var(--bg);
+  }
+  #bar button {
+    background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px;
+    height: 34px; min-width: 38px; padding: 0 10px; font: inherit; cursor: pointer;
+  }
+  #bar button:hover { border-color: var(--accent); }
+  #progress { flex: 1; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  #progress > div { height: 100%; background: var(--accent); width: 0; transition: width .25s; }
+  #counter { min-width: 60px; text-align: center; font-variant-numeric: tabular-nums; }
+
+
+  @media (max-width: 640px) { .hide-sm { display: none; } #bar { padding: 0 16px; gap: 6px; } }
+
+  @media print {
+    body { overflow: visible; background: #fff; }
+    #bar { display: none !important; }
+    #viewport { position: static; display: block; }
+    #stage { transform: none !important; width: auto; height: auto; }
+    .slide { display: flex !important; position: relative; width: 1280px; height: 720px; page-break-after: always; box-shadow: none; animation: none; }
+  }
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<!-- 1 · TITLE -->
+<section class="slide title-slide">
+  <p class="kicker">Project demo · October 2026</p>
+  <h1>Support Ticket Router</h1>
+  <p class="lead">Reads customer support emails, classifies them with Claude, and creates Jira tickets. Emails it is unsure about go to a person instead.</p>
+  <div class="slide-footer"><span>Suganthi Tamilarasu</span><span>Press <b>→</b> to start · <b>F</b> fullscreen</span></div>
+</section>
+
+<!-- 2 · OVERVIEW -->
+<section class="slide">
+  <p class="kicker">Project overview</p>
+  <h2>What the router does</h2>
+  <div class="grid3">
+    <div class="card info"><h3>1 · Input</h3><p class="small" style="margin:0">Customer emails as <code>.eml</code> files. The router reads the sender, the subject and the plain-text body.</p></div>
+    <div class="card info"><h3>2 · Classify</h3><p class="small" style="margin:0">Claude reads each email and returns structured fields: <b>category</b>, <b>urgency</b>, a one-line <b>summary</b>, the <b>team</b>, and how <b>confident</b> it is.</p></div>
+    <div class="card info"><h3>3 · Act</h3><p class="small" style="margin:0">A <b>Jira ticket</b> with priority and labels, or the email is <b>held for a person</b> when it is unclear, empty or suspicious.</p></div>
+  </div>
+  <div class="grid2" style="margin-top:22px; grid-template-columns: 1.15fr 1fr">
+    <table>
+      <tr><th>Category</th><th>Routed to team</th></tr>
+      <tr><td><code>account_access</code></td><td>support</td></tr>
+      <tr><td><code>incident</code></td><td>engineering</td></tr>
+      <tr><td><code>performance</code></td><td>engineering</td></tr>
+      <tr><td><code>billing</code></td><td>billing</td></tr>
+      <tr><td><code>feature_request</code></td><td>product</td></tr>
+      <tr><td><code>other</code></td><td>support</td></tr>
+    </table>
+    <div>
+      <table>
+        <tr><th>Urgency</th><th>Jira priority</th></tr>
+        <tr><td><code>critical</code></td><td>Highest</td></tr>
+        <tr><td><code>high</code></td><td>High</td></tr>
+        <tr><td><code>medium</code></td><td>Medium</td></tr>
+        <tr><td><code>low</code></td><td>Low</td></tr>
+      </table>
+      <p class="small muted" style="margin-top:14px">Also: a <b>dry-run</b> mode (no tickets), a <b>run summary</b> after every run, and an <b>evaluation suite</b> that scores the router on 21 labelled emails.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3 · WORKFLOW -->
+<section class="slide">
+  <p class="kicker">Workflow</p>
+  <h2>From .eml file to Jira ticket, or to a person</h2>
+  <svg class="flow" viewBox="0 0 1136 400" role="img" aria-label="Pipeline diagram">
+    <defs>
+      <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker>
+      <marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="head a" d="M0,0 L10,5 L0,10 z"/></marker>
+      <marker id="ahw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="head w" d="M0,0 L10,5 L0,10 z"/></marker>
+    </defs>
+    <rect class="box" x="6" y="130" width="150" height="74" rx="10"/><text class="t" x="81" y="163">Email</text><text class="st" x="81" y="184">emails/*.eml</text>
+    <rect class="box" x="196" y="130" width="150" height="74" rx="10"/><text class="t" x="271" y="163">Read</text><text class="st" x="271" y="184">email_reader.py</text>
+    <rect class="box ai" x="386" y="130" width="170" height="74" rx="10"/><text class="t" x="471" y="163">Claude + Instructor</text><text class="st" x="471" y="184">classify_email()</text>
+    <rect class="box" x="596" y="130" width="160" height="74" rx="10"/><text class="t" x="676" y="163">Schema check</text><text class="st" x="676" y="184">models.py</text>
+    <rect class="box" x="796" y="130" width="150" height="74" rx="10"/><text class="t" x="871" y="163">Code rules</text><text class="st" x="871" y="184">review_reasons()</text>
+    <rect class="box ok" x="986" y="40" width="144" height="74" rx="10"/><text class="t" x="1058" y="73">Jira ticket</text><text class="st" x="1058" y="94">jira.py</text>
+    <rect class="box hold" x="986" y="236" width="144" height="84" rx="10"/><text class="t" x="1058" y="268">Needs a person</text><text class="st" x="1058" y="290">needs_human.json</text>
+    <path class="edge" d="M156,167 H194" marker-end="url(#ah)"/>
+    <path class="edge" d="M346,167 H384" marker-end="url(#ah)"/>
+    <path class="edge" d="M556,167 H594" marker-end="url(#ah)"/>
+    <path class="edge" d="M756,167 H794" marker-end="url(#ah)"/>
+    <path class="edge" d="M946,150 C966,150 966,77 984,77" marker-end="url(#ah)"/>
+    <text class="lbl" x="846" y="116">all rules pass</text>
+    <path class="edge holdline" d="M946,186 C966,186 966,268 984,268" marker-end="url(#ahw)"/>
+    <text class="lbl w" x="884" y="240">a rule fires</text>
+    <path class="edge loop" d="M676,130 C676,60 471,60 471,128" marker-end="url(#aha)"/>
+    <text class="lbl a" x="500" y="54">invalid answer → error sent back to Claude (max 2 retries)</text>
+    <path class="edge holdline" d="M676,204 V292 H984" marker-end="url(#ahw)"/>
+    <text class="lbl w" x="690" y="284">retries used up</text>
+    <path class="edge holdline" d="M271,204 V360 H1058 V322" marker-end="url(#ahw)"/>
+    <text class="lbl w" x="290" y="352">empty body → skip the model</text>
+  </svg>
+  <p class="muted small" style="margin-top:4px">Grey: the main path. Blue: Instructor's automatic retry. Orange: every way an email can end up with a person instead of a ticket. Nothing is dropped silently.</p>
+</section>
+
+<!-- 4 · STACK -->
+<section class="slide">
+  <p class="kicker">How it is built</p>
+  <h2>Tech stack and project layout</h2>
+  <div class="grid2">
+    <div>
+      <table>
+        <tr><th>Piece</th><th>Used for</th></tr>
+        <tr><td><b>Python 3.13</b> + <b>uv</b></td><td>runtime, dependencies, lock file</td></tr>
+        <tr><td><b>Claude</b> <code>claude-sonnet-4-6</code></td><td>reads and classifies the email</td></tr>
+        <tr><td><b>Instructor</b> 1.17</td><td>structured output + automatic retries</td></tr>
+        <tr><td><b>Pydantic</b> v2</td><td>schema, allowed values, validators</td></tr>
+        <tr><td><b>pydantic-settings</b></td><td>secrets from <code>.env</code></td></tr>
+        <tr><td><b>httpx</b></td><td>Jira Cloud REST API v3</td></tr>
+        <tr><td>stdlib <code>email</code></td><td>parsing <code>.eml</code> files</td></tr>
+      </table>
+    </div>
+    <pre><span class="k">support-ticket-router/</span>
+├── src/support_ticket_router/
+│   ├── config.py        <span class="c"># settings from .env</span>
+│   ├── email_reader.py  <span class="c"># .eml → sender, subject, body</span>
+│   ├── models.py        <span class="c"># EmailClassification schema</span>
+│   ├── main.py          <span class="c"># prompt, rules, CLI, summary</span>
+│   └── jira.py          <span class="c"># create the ticket</span>
+├── emails/              <span class="c"># 6 sample emails</span>
+├── eval/
+│   ├── emails/          <span class="c"># 15 hard + held-out emails</span>
+│   ├── labelled.csv     <span class="c"># expected answers</span>
+│   ├── run_eval.py      <span class="c"># accuracy, misses, stability</span>
+│   └── EVAL.md          <span class="c"># results log</span>
+├── output/              <span class="c"># needs_human.json (ignored)</span>
+└── docs/presentation.html</pre>
+  </div>
+</section>
+
+<!-- 5 · SCHEMA -->
+<section class="slide">
+  <p class="kicker">How it is implemented · 1</p>
+  <h2>The schema is the contract with the model</h2>
+  <div class="grid2" style="grid-template-columns: 1.25fr 1fr">
+<pre><span class="k">class</span> EmailClassification(BaseModel):
+    category: Literal[<span class="s">"account_access"</span>, <span class="s">"incident"</span>, <span class="s">"billing"</span>,
+                      <span class="s">"feature_request"</span>, <span class="s">"performance"</span>, <span class="s">"other"</span>]
+        = Field(description=CATEGORY_DEFINITIONS)
+    urgency:  Literal[<span class="s">"low"</span>, <span class="s">"medium"</span>, <span class="s">"high"</span>, <span class="s">"critical"</span>]
+        = Field(description=URGENCY_DEFINITIONS)
+    summary:  str = Field(min_length=<span class="r">15</span>, max_length=<span class="r">240</span>)
+    route_to: Literal[<span class="s">"support"</span>, <span class="s">"engineering"</span>, <span class="s">"billing"</span>, <span class="s">"product"</span>]
+    confidence:  Literal[<span class="s">"high"</span>, <span class="s">"medium"</span>, <span class="s">"low"</span>]
+    needs_human: bool
+
+    <span class="k">@model_validator</span>(mode=<span class="s">"after"</span>)
+    <span class="k">def</span> validate_route(self):        <span class="c"># billing → billing, ...</span>
+    <span class="k">@model_validator</span>(mode=<span class="s">"after"</span>)
+    <span class="k">def</span> low_confidence_needs_human(self):</pre>
+    <div>
+      <div class="card info" style="margin-bottom:14px"><h3>Literal = a fixed list</h3><p class="small" style="margin:0">Instructor shows the allowed values to Claude. Anything else fails validation and is retried.</p></div>
+      <div class="card info" style="margin-bottom:14px"><h3>Descriptions are prompt</h3><p class="small" style="margin:0">Each field's <code>description</code> is read by the model, so the label definitions live right on the field.</p></div>
+      <div class="card info"><h3>Validators check meaning</h3><p class="small" style="margin:0">They raise an error that is sent back to Claude, so the model can correct itself.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 · CALL + RULES -->
+<section class="slide">
+  <p class="kicker">How it is implemented · 2</p>
+  <h2>One call, a typed result, and rules in code</h2>
+  <div class="grid2">
+<pre>result = client.messages.create(
+    model=<span class="s">"claude-sonnet-4-6"</span>,
+    max_tokens=1024,
+    system=SYSTEM_PROMPT,   <span class="c"># rules + definitions + 4 examples</span>
+    messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: prompt}],
+    max_retries=<span class="r">2</span>,
+    response_model=EmailClassification,
+)
+<span class="c"># prompt: everything the customer wrote is inside tags</span>
+&lt;email&gt;
+&lt;sender&gt;...&lt;/sender&gt;
+&lt;subject&gt;...&lt;/subject&gt;
+&lt;body&gt;...&lt;/body&gt;
+&lt;/email&gt;</pre>
+<pre><span class="k">def</span> process_email(email_data):
+    <span class="k">if not</span> email_data[<span class="s">"body"</span>].strip():
+        <span class="k">return</span> None, [<span class="s">"email has no readable text body"</span>]
+    c = classify_email(email_data)
+    <span class="k">return</span> c, review_reasons(c, email_data)
+
+<span class="k">def</span> review_reasons(c, email_data):
+    <span class="c"># held for a person when any of these fire</span>
+    - the model set needs_human
+    - text looks like instructions to the AI
+    - critical, but category is not incident
+    - critical, but no outage words in body</pre>
+  </div>
+  <p class="muted small" style="margin-top:14px"><code>process_email()</code> is shared by the CLI and the evaluation script, so what we measure is exactly what runs.</p>
+</section>
+
+<!-- 7 · JIRA + OUTPUT -->
+<section class="slide">
+  <p class="kicker">How it is implemented · 3</p>
+  <h2>The Jira ticket and what a run looks like</h2>
+  <div class="grid2" style="grid-template-columns: 1fr 1.1fr">
+    <div>
+      <table>
+        <tr><th>Jira field</th><th>Comes from</th></tr>
+        <tr><td>Summary</td><td><code>summary</code> (max 250 chars)</td></tr>
+        <tr><td>Description</td><td><code>summary</code></td></tr>
+        <tr><td>Priority</td><td><code>urgency</code> → Low … Highest</td></tr>
+        <tr><td>Labels</td><td><code>category</code>, team (e.g. <code>route-billing</code>)</td></tr>
+        <tr><td>Project / type</td><td><code>.env</code> project key, Task</td></tr>
+      </table>
+      <p class="small" style="margin-top:16px">Created with one <code>POST /rest/api/3/issue</code> call (httpx, API token from <code>.env</code>). A Jira error is reported for that email; the run continues.</p>
+      <p class="small muted"><code>--dry-run</code> does everything except this call.</p>
+    </div>
+<pre><span class="c">&gt; uv run support-ticket-router --dry-run</span>
+Found 6 email file(s).
+DRY RUN: emails are classified, but no Jira
+tickets are created.
+...
+============================================
+RUN SUMMARY
+============================================
+Classified (dry run, no ticket): 6
+  ticket_001_password_reset  -> account_access / high
+  ticket_002_service_outage  -> incident / critical
+  ticket_003_billing_dispute -> billing / medium
+  ticket_004_feature_request -> feature_request / low
+  ticket_005_slow_application -> performance / medium
+  ticket_006_account_access  -> account_access / high
+<span class="w">NEEDS A PERSON (no ticket created): 0</span>
+<span class="r">Failed for other reasons: 0</span></pre>
+  </div>
+</section>
+
+<!-- 8 · ISSUES 1–3 -->
+<section class="slide">
+  <p class="kicker">Review findings · 1 of 2</p>
+  <h2>Issues suggested in the review, and how they were fixed</h2>
+  <table class="issues">
+    <tr><th>Issue</th><th>What the review found</th><th>Fix</th><th>Result</th></tr>
+    <tr>
+      <td><b><span class="n">1</span>Retries ran out silently</b><span class="small muted">max retries · fallback</span></td>
+      <td class="found">After the last retry the error fell into a general <code>except</code>: one printed line, no ticket, nothing saved. A quiet error.</td>
+      <td><code>max_retries=2</code> chosen on purpose. Every email lands in <b>created</b>, <b>needs a person</b> or <b>failed</b>. A run summary, <code>needs_human.json</code>, exit code 1.</td>
+      <td class="result"><span class="tag good">Tested</span> forced-invalid answers → 3 attempts → email held, not lost</td>
+    </tr>
+    <tr>
+      <td><b><span class="n">2</span>Valid shape, wrong meaning</b><span class="small muted">semantic validation</span></td>
+      <td class="found">An empty summary was accepted. <code>route_to</code> was predicted but never used anywhere.</td>
+      <td>Summary must be 15–240 characters. A validator checks that the route matches the category. The route goes to Jira as a label.</td>
+      <td class="result"><span class="tag good">Tested</span> empty summary and billing → engineering are both rejected</td>
+    </tr>
+    <tr>
+      <td><b><span class="n">3</span>Labels with no definitions</b><span class="small muted">calibration</span></td>
+      <td class="found">Vague urgency words, description strings glued together (<code>"valueslow"</code>), no examples.</td>
+      <td>Definitions based on facts in the email ("cannot work, no workaround"). 4 hard-case examples in the prompt.</td>
+      <td class="result"><span class="tag good">Measured</span> urgency 16 → 17/18; same answer in 5 of 5 runs</td>
+    </tr>
+  </table>
+</section>
+
+<!-- 9 · ISSUES 4–6 -->
+<section class="slide">
+  <p class="kicker">Review findings · 2 of 2</p>
+  <h2>Issues suggested in the review, and how they were fixed</h2>
+  <table class="issues">
+    <tr><th>Issue</th><th>What the review found</th><th>Fix</th><th>Result</th></tr>
+    <tr>
+      <td><b><span class="n">4</span>No way to say "not sure"</b><span class="small muted">human in the loop</span></td>
+      <td class="found">Every email became a ticket. An empty email or one with two problems still got a confident answer.</td>
+      <td>New <code>confidence</code> and <code>needs_human</code> fields. An empty body skips the model. Held emails get no ticket.</td>
+      <td class="result"><span class="tag good">Measured</span> hard cases held: 1/4 → 4/4</td>
+    </tr>
+    <tr>
+      <td><b><span class="n">5</span>"Works on my 6 emails"</b><span class="small muted">evaluation</span></td>
+      <td class="found">No labelled data, no score, no hard cases. A prompt change could break things unnoticed.</td>
+      <td>21 labelled emails (tune / hard / held-out), <code>run_eval.py</code> scoring each field, results in <code>EVAL.md</code>.</td>
+      <td class="result"><span class="tag good">Built</span> accuracy per field, list of misses, stability check</td>
+    </tr>
+    <tr>
+      <td><b><span class="n">6</span>Prompt injection</b><span class="small muted">trust boundary</span></td>
+      <td class="found">Sender and subject sat outside the tags. The model's urgency became Jira priority with no check.</td>
+      <td>All customer text inside <code>&lt;email&gt;</code>, escaped. Code rules: instruction-like text is held; <code>critical</code> needs an incident with outage evidence.</td>
+      <td class="result"><span class="tag good">Tested</span> 2/2 attack emails stayed <code>low</code> and were held</td>
+    </tr>
+  </table></section>
+
+<!-- 10 · EVALUATION / RESULTS -->
+<section class="slide">
+  <p class="kicker">Results</p>
+  <h2>Before vs after, on the same 21 labelled emails</h2>
+  <div class="grid2" style="grid-template-columns: 1.15fr 1fr">
+    <table>
+      <tr><th>Field</th><th class="num">Before</th><th class="num">After</th></tr>
+      <tr><td>category</td><td class="num">18/18</td><td class="num">18/18</td></tr>
+      <tr><td>urgency</td><td class="num">16/18</td><td class="num up">17/18</td></tr>
+      <tr><td>route_to</td><td class="num">18/18</td><td class="num">18/18</td></tr>
+      <tr><td>needs_human (all)</td><td class="num">16/19</td><td class="num up">18/19</td></tr>
+      <tr><td>needs_human (hard cases)</td><td class="num">1/4</td><td class="num up">4/4</td></tr>
+      <tr><td>injection resisted</td><td class="num">2/2</td><td class="num up">2/2 + held</td></tr>
+      <tr><td>stable over 5 runs</td><td class="num">10/10</td><td class="num">10/10</td></tr>
+    </table>
+    <div>
+      <div class="card info" style="margin-bottom:14px"><h3>The test set</h3><p class="small" style="margin:0"><b>10 tune</b> (6 originals + 4 normal) · <b>6 hard</b> (attacks, empty, two problems, loud-but-minor, very short) · <b>5 held-out</b> never used for tuning.</p></div>
+      <div class="card info" style="margin-bottom:14px"><h3>What the numbers say</h3><p class="small" style="margin:0">On the six original emails the router was already good. <b>Every problem showed up only in the hard cases.</b></p></div>
+      <div class="card risk"><h3>Two misses left</h3><p class="small" style="margin:0"><b>018</b> (held-out): admin VAT change rated medium, not tuned on purpose. <b>013</b>: suspicious login sent to a person. That is defensible, so it is a labelling decision.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 · DEMO -->
+<section class="slide">
+  <p class="kicker">Live demo</p>
+  <h2>Demo script (dry run: no Jira tickets are created)</h2>
+<pre style="font-size:14.5px"><span class="c"># 1. The happy path: six normal emails</span>
+uv run support-ticket-router --dry-run
+
+<span class="c"># 2. The hard cases: slow-but-usable, injection, empty, two problems</span>
+uv run support-ticket-router --dry-run emails/ticket_005_slow_application.eml `
+    eval/emails/ticket_007_injection_subject.eml eval/emails/ticket_009_empty_body.eml `
+    eval/emails/ticket_010_two_problems.eml
+
+<span class="c"># 3. Show what a person picks up</span>
+type output\needs_human.json
+
+<span class="c"># 4. The numbers</span>
+uv run python eval/run_eval.py --label demo</pre>
+  <div class="grid3" style="margin-top:16px">
+    <div class="card info"><p class="small" style="margin:0"><b>Step 1:</b> point at the RUN SUMMARY. 6 classified, 0 held, exit code 0.</p></div>
+    <div class="card info"><p class="small" style="margin:0"><b>Step 2:</b> 005 goes through as medium, and three are held, each with a different reason.</p></div>
+    <div class="card info"><p class="small" style="margin:0"><b>Steps 3–4:</b> the model's suggestion is kept for review. Then the per-field table (~1 min).</p></div>
+  </div>
+</section>
+
+<!-- 12 · LIMITS -->
+<section class="slide">
+  <p class="kicker">Honest limits and next steps</p>
+  <h2>What this does not prove yet</h2>
+  <div class="grid2">
+    <div class="card risk"><h3>Limits</h3><ul class="clean small">
+      <li>21 synthetic emails: one answer moves a field by ~5%</li>
+      <li>Labels and prompt written by the same people</li>
+      <li>Keyword rules can over-hold (e.g. "System: Windows 11" in a body looks like an instruction). Safe, but extra work for people.</li>
+      <li>Escaping and rules reduce injection risk; they do not remove it</li>
+      <li>A validator proves consistency, not truth</li>
+    </ul></div>
+    <div class="card fix"><h3>Next steps</h3><ul class="clean small">
+      <li>Add real (anonymised) emails, labelled by a second person</li>
+      <li>Decide the team rule for suspicious logins (ticket 013)</li>
+      <li>Add a tune email like 018 (admin change) and fix low vs medium</li>
+      <li>Send held emails to a Jira triage queue instead of a JSON file</li>
+      <li>Run <code>eval/run_eval.py</code> in CI on every prompt change to catch regressions</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- 13 · Q&A -->
+<section class="slide title-slide">
+  <p class="kicker">Thank you</p>
+  <h1>Questions?</h1>
+  <p class="lead">Code: <code>src/support_ticket_router/</code> · Results: <code>eval/EVAL.md</code> · Run: <code>uv run support-ticket-router --dry-run</code></p>
+</section>
+
+</div></div>
+
+<nav id="bar">
+  <button id="prev" aria-label="Previous slide">←</button>
+  <button id="next" aria-label="Next slide">→</button>
+  <span id="counter"></span>
+  <div id="progress"><div></div></div>
+  <button id="btn-full">Fullscreen</button>
+</nav>
+
+<script>
+(function () {
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const stage = document.getElementById('stage');
+  const viewport = document.getElementById('viewport');
+  let index = 0;
+
+  function fit() {
+    const scale = Math.min(viewport.clientWidth / 1300, viewport.clientHeight / 740);
+    stage.style.transform = 'scale(' + scale + ')';
+  }
+
+  function show(i) {
+    index = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((s, n) => s.classList.toggle('active', n === index));
+    document.getElementById('counter').textContent = (index + 1) + ' / ' + slides.length;
+    document.querySelector('#progress > div').style.width = ((index + 1) / slides.length * 100) + '%';
+    if (location.hash !== '#' + (index + 1)) history.replaceState(null, '', '#' + (index + 1));
+  }
+
+  function toggleFull() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+    else document.exitFullscreen && document.exitFullscreen();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key;
+    if (k === 'ArrowRight' || k === 'PageDown' || k === ' ' || k === 'Enter') { e.preventDefault(); show(index + 1); }
+    else if (k === 'ArrowLeft' || k === 'PageUp' || k === 'Backspace') { e.preventDefault(); show(index - 1); }
+    else if (k === 'Home') show(0);
+    else if (k === 'End') show(slides.length - 1);
+    else if (k === 'f' || k === 'F') toggleFull();
+  });
+
+  let touchX = null;
+  document.addEventListener('touchstart', (e) => { touchX = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) show(index + (dx < 0 ? 1 : -1));
+    touchX = null;
+  });
+
+  document.getElementById('prev').onclick = () => show(index - 1);
+  document.getElementById('next').onclick = () => show(index + 1);
+  document.getElementById('btn-full').onclick = toggleFull;
+  window.addEventListener('resize', fit);
+  window.addEventListener('hashchange', () => show(parseInt(location.hash.slice(1), 10) - 1 || 0));
+
+  fit();
+  show(parseInt(location.hash.slice(1), 10) - 1 || 0);
+})();
+</script>
+</body>
+</html>

@@ -14,8 +14,12 @@ def read_email(file_path: Path) -> dict:
 
     if body_part is not None:
         body = body_part.get_content()
+    elif message.is_multipart():
+        # Multipart with no plain-text part (e.g. attachment only): there is no readable body.
+        # get_content() raises KeyError on multipart messages, so do not call it here.
+        body = ""
     else:
-        # Fallback for emails without a plain-text body part.
+        # Fallback for single-part emails without a plain-text body part.
         content = message.get_content()
         body = content if isinstance(content, str) else ""
 

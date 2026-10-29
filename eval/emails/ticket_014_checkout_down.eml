@@ -1,0 +1,18 @@
+From: Chris Young <chris.young@example.com>
+To: support@example.com
+Date: Tue, 13 Oct 2026 09:00:00 +0530
+Subject: Checkout failing for all customers
+Message-ID: <ticket-014@example.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+Hi,
+
+Since 10:40 none of our customers can complete checkout. The payment API retu=
+rns HTTP 500 for every request. We are losing sales every minute this continu=
+es.
+
+Please escalate immediately.
+
+Chris

@@ -20,7 +20,8 @@ def create_jira_issue(result: EmailClassification) -> str:
                 }],
             },
             "priority": {"name": JIRA_PRIORITY.get(result.urgency, "Medium")},
-            "labels": [result.category],
+            # route_to becomes a label so the team routing actually reaches Jira.
+            "labels": [result.category, f"route-{result.route_to}"],
         }
     }
     response = httpx.post(

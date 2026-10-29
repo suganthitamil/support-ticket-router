@@ -1,0 +1,18 @@
+From: Ari Banks <ari.banks@example.com>
+To: support@example.com
+Date: Tue, 13 Oct 2026 09:00:00 +0530
+Subject: Sync endpoint timing out, nightly import failed twice
+Message-ID: <ticket-016@example.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+Hi,
+
+The /sync API endpoint now takes over 60 seconds and times out. Other endpoin=
+ts respond normally. Our nightly import has failed two nights in a row and we=
+ have no workaround, so our team starts each day with stale data.
+
+Can you look into it?
+
+Ari

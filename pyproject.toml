@@ -1,7 +1,7 @@
 [project]
 name = "support-ticket-router"
 version = "0.1.0"
-description = "Add your description here"
+description = "Classify support emails with Claude and route them to Jira, with a safe path for uncertain cases"
 readme = "README.md"
 authors = [
     { name = "Suganthi Tamilarasu", email = "tamilarasu.suganthi+orbc@orbcomm.com" }
@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
-support-ticket-router = "support_ticket_router:main"
+support-ticket-router = "support_ticket_router.main:cli"
 
 [build-system]
 requires = ["uv_build>=0.13.1,<0.14.0"]
